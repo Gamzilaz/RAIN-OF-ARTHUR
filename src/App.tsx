@@ -20,7 +20,8 @@ import {
   Compass,
   Info,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Upload
 } from "lucide-react";
 
 import Raindrops, { RaindropsOptions } from "./lib/raindrops";
@@ -1008,7 +1009,7 @@ export default function App() {
   };
 
   // 4. Smooth Transition engine between weather presets (lerp values and draw crossfaded backgrounds)
-  const transitionToPreset = async (target: WeatherPreset, keepCurrentBg: boolean = false) => {
+  const transitionToPreset = async (target: WeatherPreset, keepCurrentBg: boolean = false, forceBgUrl?: string) => {
     try {
       const startRainChance = rainChance;
       const startMinR = minR;
@@ -1032,7 +1033,7 @@ export default function App() {
 
       // Preload target background image in memory to ensure fluid transitions
       let nextImg: HTMLImageElement;
-      const bgToLoad = DEFAULT_BACKGROUND_IMAGE;
+      const bgToLoad = forceBgUrl || ((target.id === "custom" && target.imgUrl) ? target.imgUrl : (currentBgUrl || DEFAULT_BACKGROUND_IMAGE));
       const isSameBg = prevImgRef.current && (bgToLoad === prevImgRef.current.src || bgToLoad === prevImgRef.current.getAttribute('src'));
       if ((keepCurrentBg || isSameBg) && prevImgRef.current) {
         nextImg = prevImgRef.current;
@@ -2078,21 +2079,7 @@ export default function App() {
       )}
 
       {/* 2. Glassmorphic header control bar */}
-      <header className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-between px-6 z-20 pointer-events-none">
-        <div className="flex items-center gap-3 w-max pointer-events-auto">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-400/10">
-            <CloudRain className="w-4 h-4 text-cyan-400 animate-pulse" />
-          </div>
-          <div>
-            <h1 className="text-white text-base font-semibold tracking-tight leading-none">
-              Rain on Glass WebGL
-            </h1>
-            <p className="text-xs text-zinc-400 font-mono tracking-wider mt-0.5 uppercase">
-              Physical Glass Refraction
-            </p>
-          </div>
-        </div>
-
+      <header className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-black/80 to-transparent flex items-center justify-end px-6 z-20 pointer-events-none">
         {/* System metrics tags */}
         <div className="flex items-center gap-4 text-xs font-mono text-zinc-300 pointer-events-auto bg-black/40 backdrop-blur-md border border-white/5 rounded-full px-4 py-1.5 shadow-lg">
           <div className="flex items-center gap-2">
@@ -2756,6 +2743,52 @@ export default function App() {
           </div>
         </div>
 
+        {/* 3.5. Background Image Settings */}
+        <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+          <label className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
+            Настройки фона
+          </label>
+          <div className="bg-zinc-950/45 p-3 rounded-2xl border border-white/5 flex flex-col gap-2.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-zinc-300">Режим фона:</span>
+              <span className="font-mono text-cyan-400 text-[10px] font-semibold">
+                {currentBgUrl === DEFAULT_BACKGROUND_IMAGE ? "Стандартный" : "Свой фон"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-300 hover:bg-cyan-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer pointer-events-auto"
+              >
+                <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                Загрузить свою картинку
+              </button>
+              
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+
+              {currentBgUrl !== DEFAULT_BACKGROUND_IMAGE && (
+                <button
+                  onClick={() => {
+                    setCurrentBgUrl(DEFAULT_BACKGROUND_IMAGE);
+                    transitionToPreset(activePreset, false, DEFAULT_BACKGROUND_IMAGE);
+                  }}
+                  className="w-full py-2 px-3 text-xs font-semibold rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition flex items-center justify-center gap-1.5 cursor-pointer pointer-events-auto"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Сбросить к базовой
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* 4. Thunder Bolt Strike Trigger */}
         <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
           <label className="text-[10px] font-mono tracking-widest text-zinc-400 uppercase">
@@ -2806,21 +2839,7 @@ export default function App() {
         </div>
       </section>
 
-      {/* 4. Immersive footer guide card */}
-      <footer className="absolute bottom-4 left-6 z-20 pointer-events-none max-w-sm">
-        <div className="bg-black/60 backdrop-blur-md rounded-2xl border border-white/5 p-3 px-4 flex items-start gap-2.5 pointer-events-auto shadow-xl">
-          <Info className="w-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] text-zinc-300 leading-normal">
-              Fully driven by high-efficiency custom WebGL fragment and vertex shaders. Refraction index calculates real-time light deflection vectors for a breathtaking organic experience.
-            </p>
-            <div className="flex gap-4 mt-1.5">
-              <span className="text-[9px] text-zinc-500 font-mono">Shader Version: 1.0.0</span>
-              <span className="text-[9px] text-zinc-500 font-mono">DPI: {activeDpi}x</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+
     </div>
   );
 }
