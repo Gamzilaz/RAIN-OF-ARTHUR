@@ -1,0 +1,6 @@
+{
+  "name": "Rain & Gyro Parallax",
+  "description": "Atmospheric rain on glass simulation with interactive gyroscope-driven parallax effects for mobile devices.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
